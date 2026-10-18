@@ -78,9 +78,10 @@ li.editing .btn{padding:9px;font-size:14px;border-radius:12px}
 .hint span{background:#fff;color:var(--dk);padding:8px 14px;border-radius:12px;font-size:14px;font-weight:700;text-align:center;max-width:70%}
 .lic{max-width:720px;margin:40px auto 0;font-size:11px;line-height:1.5;color:var(--muted);text-align:center}
 .lic a{color:inherit}
-.chip{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:grab;touch-action:none;z-index:1}
+.chip{position:absolute;transform:none;width:0;height:0;cursor:grab;touch-action:none;z-index:1}
 .chip.drag{cursor:grabbing;z-index:5}
 .chip .e,.cl .e{width:clamp(28px,5vw,48px);height:clamp(28px,5vw,48px);border-radius:50%;background:#fff;border:clamp(2px,.4vw,4px) solid var(--c,#fff);display:grid;place-items:center;font-size:clamp(14px,2.6vw,24px);line-height:1}
+.chip .e{position:absolute;left:0;top:0;transform:translate(-50%,-50%)}
 .chip.on .e,.cl.on .e{box-shadow:0 0 0 4px rgba(255,255,255,.55)}
 .board:not(.names) .chip:not(.on):not(.drag):not(.ring):not(:hover):not(:focus-visible) .n,.board:not(.names) .cl:not(:hover):not(:focus-visible) .n{display:none}
 .chip:hover,.cl:hover{z-index:4}
@@ -96,7 +97,8 @@ li.editing .btn{padding:9px;font-size:14px;border-radius:12px}
 .cl.on .e{box-shadow:5px 4px 0 -1px #fff,10px 8px 0 -2px rgba(255,255,255,.6),0 0 0 4px rgba(255,255,255,.55)}
 .cl .bd{position:absolute;top:-9px;right:-12px;background:var(--dk);color:#fff;border:2px solid #fff;border-radius:999px;font-weight:800;font-size:12px;line-height:1.2;font-style:normal;padding:1px 6px}
 .cl.open{display:grid;place-items:center;border-radius:50%;background:rgba(30,34,32,.6);border:2px dashed rgba(255,255,255,.85);font-weight:800;font-size:22px;color:#fff;z-index:3}
-.chip .n,.cl .n{background:#fff;color:var(--dk);border-radius:10px;padding:2px 10px;font-size:clamp(10px,1.4vw,14px);font-weight:600;max-width:140px;text-align:center;line-height:1.25;overflow-wrap:anywhere;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.chip .n,.cl .n{background:#fff;color:var(--dk);border-radius:10px;padding:3px 8px;font-size:clamp(10px,1.4vw,14px);font-weight:600;max-width:clamp(88px,18vw,160px);text-align:center;line-height:1.25;white-space:normal;overflow-wrap:break-word;word-break:normal;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.chip .n{position:absolute;left:0;top:calc(clamp(28px,5vw,48px) / 2 + 5px);transform:translateX(-50%);}
 </style>
 </head>
 <body>
@@ -270,7 +272,7 @@ $("chips").addEventListener("pointerdown",e=>{
   const now=Date.now();
   if(lastTap&&lastTap.id===tid&&now-lastTap.t<400){lastTap=null;drag=null;startEdit(tid);return}
   lastTap={id:tid,t:now};
-  drag={el:c,id:tid,sx:e.clientX,sy:e.clientY};
+  const er=c.querySelector(".e").getBoundingClientRect();drag={el:c,id:tid,sx:e.clientX,sy:e.clientY,offsetX:e.clientX-(er.left+er.width/2),offsetY:e.clientY-(er.top+er.height/2)};
   sel=drag.id;
   document.querySelectorAll(".chip.on").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll("li.on").forEach(x=>x.classList.remove("on"));
@@ -283,8 +285,8 @@ $("chips").addEventListener("pointermove",e=>{
   if(!drag.moved){if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<4)return;drag.moved=true;drag.el.style.marginLeft=drag.el.style.marginTop="0";openKey=null}
   const r=$("bd").getBoundingClientRect();
   const it=items.find(i=>i.id===drag.id);
-  it.x=Math.min(.985,Math.max(.015,(e.clientX-r.left)/r.width));
-  it.y=Math.min(.985,Math.max(.015,(e.clientY-r.top)/r.height));
+  it.x=Math.min(.985,Math.max(.015,(e.clientX-drag.offsetX-r.left)/r.width));
+  it.y=Math.min(.985,Math.max(.015,(e.clientY-drag.offsetY-r.top)/r.height));
   drag.el.style.left=it.x*100+"%";drag.el.style.top=it.y*100+"%";
   const rr=document.querySelector(`li[data-id="${it.id}"] .rd`);if(rr)rr.textContent=rd(it);
   const bb=document.querySelector(`li[data-id="${it.id}"] .bg`);if(bb)setBg(bb,it);
